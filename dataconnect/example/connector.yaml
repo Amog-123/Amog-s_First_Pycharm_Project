@@ -1,0 +1,13 @@
+connectorId: example
+generate:
+  javascriptSdk:
+    - outputDir: ..\..\b2b marketplace\src\dataconnect-generated
+      package: "@dataconnect/generated"
+      packageJsonDir: ..\..\b2b marketplace
+      react: false
+      angular: false
+    - outputDir: ..\..\b2b marketplace\functions1\src\dataconnect-generated
+      package: "@dataconnect/generated"
+      packageJsonDir: ..\..\b2b marketplace\functions1
+      react: false
+      angular: false

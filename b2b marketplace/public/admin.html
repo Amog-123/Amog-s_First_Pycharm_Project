@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title> Dashboard - Aetheron AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+<!-- Load SDKs first -->
+<script src="/__/firebase/12.1.0/firebase-app-compat.js"></script>
+<script src="/__/firebase/12.1.0/firebase-auth-compat.js"></script>
+<script src="/__/firebase/12.1.0/firebase-firestore-compat.js"></script>
+
+<!-- Now init.js can safely run -->
+<script src="/__/firebase/init.js"></script>
+  <style>
+    body { padding-top: 64px; font-family: 'Poppins', sans-serif; }
+    .fade-in { opacity:0; transform:translateY(30px); transition:opacity 1s,transform 1s; }
+    .fade-in.visible { opacity:1; transform:none; }
+  </style>
+</head>
+<body class="bg-gray-50">
+
+  <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center justify-between px-6 fade-in">
+    <a href="index.html" class="flex items-center gap-3">
+      <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=48" alt="Aetheron AI Logo" class="w-10 h-10 rounded-full border-2 border-purple-600" />
+      <span class="text-xl font-extrabold text-purple-700 tracking-tight">Aetheron AI</span>
+    </a>
+    <nav class="hidden md:flex gap-6">
+      <a href="lend-ai-service.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Submit AI Service</a>
+      <a href="marketplace.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Marketplace</a>
+      <a href="contact.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Contact</a>
+      <a href="admin.html" class="text-purple-700 font-semibold border-b-2 border-purple-700">Dashboard</a>
+    </nav>
+    <div id="authArea" class="flex items-center gap-2"></div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-12">
+    <!-- Competition Header -->
+    <div class="text-center mb-12 fade-in">
+      <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold w-fit mx-auto mb-4">
+        🏆 AI-Tinkerepreneur Competition Dashboard
+      </div>
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">Competition Analytics</h1>
+      <p class="text-xl text-gray-600">Real-time insights powered by Gemini 2.5 AI analysis</p>
+    </div>
+
+    <!-- Competition Metrics -->
+    <div id="competitionMetrics" class="mb-8 fade-in">
+      <!-- Metrics will be populated by JavaScript -->
+    </div>
+
+    <!-- AI Analysis Status -->
+    <div class="grid md:grid-cols-3 gap-6 mb-8 fade-in">
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+            <span class="text-white font-bold">AI</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg">Gemini 2.5 Analysis</h3>
+            <p class="text-gray-600 text-sm">Advanced AI processing</p>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <div class="text-3xl font-bold text-purple-600" id="aiAnalysisCount">-</div>
+          <div class="text-sm text-gray-600">Services Analyzed</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+            <span class="text-white font-bold">🎯</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg">High-Potential Matches</h3>
+            <p class="text-gray-600 text-sm">90%+ matching score</p>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <div class="text-3xl font-bold text-green-600" id="highPotentialCount">-</div>
+          <div class="text-sm text-gray-600">Premium Matches</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-lg p-6">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
+            <span class="text-white font-bold">💰</span>
+          </div>
+          <div>
+            <h3 class="font-bold text-lg">Revenue Potential</h3>
+            <p class="text-gray-600 text-sm">Estimated value</p>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <div class="text-3xl font-bold text-orange-600" id="revenueEstimate">$0</div>
+          <div class="text-sm text-gray-600">Total Potential</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Submissions -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8 fade-in">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-900">Recent AI Service Submissions</h2>
+        <div class="flex gap-2">
+          <select id="statusFilter" class="border rounded-xl px-4 py-2 text-sm">
+            <option value="">All Status</option>
+            <option value="pending">Pending Analysis</option>
+            <option value="analyzing">AI Analyzing</option>
+            <option value="analyzed">Analysis Complete</option>
+          </select>
+          <button onclick="refreshData()" class="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-purple-700 transition">
+            Refresh
+          </button>
+        </div>
+      </div>
+      <div id="serviceList" class="space-y-4">
+        <!-- Services will be populated here -->
+      </div>
+    </div>
+
+    <!-- AI Insights Panel -->
+    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-8 fade-in">
+      <h3 class="text-2xl font-bold text-gray-900 mb-6">🤖 AI Competition Insights</h3>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl p-6">
+          <h4 class="font-bold text-lg mb-4">Top AI Categories</h4>
+          <div id="topCategories" class="space-y-2">
+            <!-- Categories will be populated -->
+          </div>
+        </div>
+        <div class="bg-white rounded-xl p-6">
+          <h4 class="font-bold text-lg mb-4">Enterprise Demand</h4>
+          <div id="enterpriseDemand" class="space-y-2">
+            <!-- Demand data will be populated -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const firebaseConfig = {
+  apiKey: "AIzaSyCBd7O4cZ8LX1dgTiTZt4NcU5NJVm4Blak",
+  authDomain: "aetheron-2b3b4.firebaseapp.com",
+  projectId: "aetheron-2b3b4",
+  storageBucket: "aetheron-2b3b4.firebasestorage.app",
+  messagingSenderId: "240923034323",
+  appId: "1:240923034323:web:4dc8e5e029e953a41e8a26"
+};
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll('.fade-in').forEach(el => el.classList.add('visible'));
+      displayCompetitionMetrics();
+      displayAIServices();
+      displayInsights();
+    });
+
+    async function displayCompetitionMetrics() {
+      const db = firebase.firestore();
+      
+      db.collection('aiServices').where('competitionEntry', '==', true)
+        .onSnapshot(snapshot => {
+          const services = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const analyzed = services.filter(s => s.geminiAnalyzed).length;
+          const highPotential = services.filter(s => s.matchingPotential > 90).length;
+          const totalRevenue = services.reduce((sum, s) => sum + (s.estimatedValue || 25000), 0);
+          
+          // Update metrics
+          document.getElementById('aiAnalysisCount').textContent = analyzed;
+          document.getElementById('highPotentialCount').textContent = highPotential;
+          document.getElementById('revenueEstimate').textContent = `$${(totalRevenue / 1000).toFixed(0)}K`;
+          
+          // Main competition metrics
+          const metricsHtml = `
+            <div class="bg-gradient-to-r from-purple-500 to-blue-500 text-white p-8 rounded-2xl shadow-xl">
+              <h3 class="text-2xl font-bold mb-6 text-center">🏆 AI-Tinkerepreneur Competition Status</h3>
+              <div class="grid md:grid-cols-4 gap-6">
+                <div class="text-center">
+                  <div class="text-4xl font-bold mb-2">${services.length}</div>
+                  <div class="text-purple-200">Total Submissions</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-4xl font-bold mb-2">${analyzed}</div>
+                  <div class="text-purple-200">AI Analyzed</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-4xl font-bold mb-2">${Math.round(analyzed/services.length*100) || 0}%</div>
+                  <div class="text-purple-200">Processing Rate</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-4xl font-bold mb-2">${services.filter(s => s.matchingPotential > 80).length}</div>
+                  <div class="text-purple-200">Great Matches</div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          const metricsContainer = document.getElementById('competitionMetrics');
+          if (metricsContainer) metricsContainer.innerHTML = metricsHtml;
+        });
+    }
+
+    function displayAIServices() {
+      const db = firebase.firestore();
+      
+      db.collection('aiServices').where('competitionEntry', '==', true)
+        .orderBy('submittedAt', 'desc').limit(15)
+        .onSnapshot(snapshot => {
+          const serviceList = document.getElementById('serviceList');
+          if (!serviceList) return;
+          
+          serviceList.innerHTML = "";
+          snapshot.forEach(doc => {
+            const s = doc.data();
+            const statusBadge = getStatusBadge(s.status, s.matchingPotential);
+            const aiScore = s.matchingPotential || 0;
+            
+            const div = document.createElement('div');
+            div.className = "p-6 rounded-xl border bg-gray-50 hover:bg-white hover:shadow-lg transition-all";
+            div.innerHTML = `
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                      <span class="text-white font-bold text-xs">AI</span>
+                    </div>
+                    <div class="font-bold text-lg text-purple-700">${s.serviceName}</div>
+                    ${statusBadge}
+                  </div>
+                  <div class="text-gray-700 mb-2">${s.serviceDescription}</div>
+                  <div class="text-sm text-gray-500 mb-2">Contact: ${s.contactEmail}</div>
+                  
+                  ${s.aiCapabilities && s.aiCapabilities.length > 0 ? 
+                    `<div class="flex flex-wrap gap-1 mb-3">
+                      ${s.aiCapabilities.slice(0, 4).map(cap => 
+                        `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${cap}</span>`
+                      ).join('')}
+                      ${s.aiCapabilities.length > 4 ? `<span class="text-gray-500 text-xs">+${s.aiCapabilities.length - 4} more</span>` : ''}
+                    </div>` : ''
+                  }
+                  
+                  ${s.geminiAnalyzed ? 
+                    `<div class="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
+                      <div class="font-semibold text-green-800 mb-1">🤖 Gemini 2.5 Analysis Complete</div>
+                      <div class="text-green-700">Market Fit: ${s.aiAnalysis?.marketFit || 'Good'} | Complexity: ${s.aiAnalysis?.complexity || 'Medium'}</div>
+                    </div>` : 
+                    `<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+                      <div class="font-semibold text-yellow-800">⏳ Awaiting AI Analysis</div>
+                    </div>`
+                  }
+                </div>
+                <div class="ml-6 text-right">
+                  <div class="text-2xl font-bold ${aiScore > 80 ? 'text-green-600' : aiScore > 60 ? 'text-yellow-600' : 'text-gray-400'}">${aiScore}%</div>
+                  <div class="text-xs text-gray-500">AI Match Score</div>
+                  ${s.estimatedValue ? `<div class="text-sm text-purple-600 font-semibold mt-1">$${(s.estimatedValue/1000).toFixed(0)}K est.</div>` : ''}
+                </div>
+              </div>
+            `;
+            serviceList.appendChild(div);
+          });
+        });
+    }
+
+    function getStatusBadge(status, potential) {
+      const badges = {
+        'pending': '<span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">Pending</span>',
+        'analyzing': '<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">🤖 AI Analyzing</span>',
+        'analyzed': potential > 90 ? 
+          '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">🏆 Competition Winner</span>' :
+          '<span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold">✅ Analysis Complete</span>'
+      };
+      return badges[status] || badges['pending'];
+    }
+
+    function displayInsights() {
+      // Mock insights data for competition demo
+      const topCategories = [
+        { name: 'Computer Vision', count: 15, trend: '+23%' },
+        { name: 'Natural Language Processing', count: 12, trend: '+18%' },
+        { name: 'Machine Learning', count: 10, trend: '+15%' },
+        { name: 'Data Analytics', count: 8, trend: '+12%' }
+      ];
+      
+      const enterpriseDemand = [
+        { industry: 'Healthcare', demand: 95, icon: '🏥' },
+        { industry: 'Finance', demand: 88, icon: '💰' },
+        { industry: 'Retail', demand: 82, icon: '🛒' },
+        { industry: 'Manufacturing', demand: 76, icon: '🏭' }
+      ];
+      
+      const categoriesContainer = document.getElementById('topCategories');
+      const demandContainer = document.getElementById('enterpriseDemand');
+      
+      if (categoriesContainer) {
+        categoriesContainer.innerHTML = topCategories.map(cat => `
+          <div class="flex justify-between items-center py-2">
+            <span class="font-medium">${cat.name}</span>
+            <div class="text-right">
+              <span class="font-bold">${cat.count}</span>
+              <span class="text-green-600 text-sm ml-2">${cat.trend}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+      
+      if (demandContainer) {
+        demandContainer.innerHTML = enterpriseDemand.map(item => `
+          <div class="flex justify-between items-center py-2">
+            <div class="flex items-center gap-2">
+              <span>${item.icon}</span>
+              <span class="font-medium">${item.industry}</span>
+            </div>
+            <div class="text-right">
+              <span class="font-bold">${item.demand}%</span>
+              <div class="w-20 h-2 bg-gray-200 rounded-full mt-1">
+                <div class="h-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full" style="width: ${item.demand}%"></div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function refreshData() {
+      displayCompetitionMetrics();
+      displayAIServices();
+      // Show refresh feedback
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = '✅ Refreshed';
+      button.classList.add('bg-green-600');
+      button.classList.remove('bg-purple-600');
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.classList.remove('bg-green-600');
+        button.classList.add('bg-purple-600');
+      }, 2000);
+    }
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

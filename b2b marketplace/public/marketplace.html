@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>AI Marketplace - Aetheron AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <!-- Load SDKs first -->
+<script src="/__/firebase/12.1.0/firebase-app-compat.js"></script>
+<script src="/__/firebase/12.1.0/firebase-auth-compat.js"></script>
+<script src="/__/firebase/12.1.0/firebase-firestore-compat.js"></script>
+
+<!-- Now init.js can safely run -->
+<script src="/__/firebase/init.js"></script>
+    
+    <style>
+        body { padding-top: 64px; font-family: 'Poppins', sans-serif; }
+        .fade-in { opacity:0; transform:translateY(30px); transition:opacity 1s,transform 1s; }
+        .fade-in.visible { opacity:1; transform:none; }
+        .card-bg {
+            background: linear-gradient(145deg, #ffffff, #f0f4f8);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-50 flex items-center justify-between px-6 fade-in">
+        <a href="index.html" class="flex items-center gap-3">
+            <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=48" alt="Aetheron AI Logo" class="w-10 h-10 rounded-full border-2 border-purple-600" />
+            <span class="text-2xl font-extrabold text-purple-700 tracking-tight">Aetheron AI</span>
+        </a>
+        <nav class="hidden md:flex gap-6">
+            <a href="lend-ai-service.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Submit AI Service</a>
+            <a href="marketplace.html" class="text-purple-700 font-semibold border-b-2 border-purple-700">Marketplace</a>
+            <a href="contact.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Contact</a>
+            <a href="admin.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Dashboard</a>
+        </nav>
+        <div id="authArea" class="flex items-center gap-2"></div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <div class="text-center mb-12 fade-in">
+            <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">AI Services Marketplace</h1>
+            <p class="text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto">Discover cutting-edge AI services from innovative startups, analyzed and matched by our Gemini 2.5 platform</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-8 fade-in">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <select id="industryFilter" class="border rounded-xl px-4 py-2 w-full md:w-auto focus:ring-2 focus:ring-purple-500 transition">
+                    <option value="">All Industries</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Automotive">Automotive</option>
+                    <option value="Technology">Technology</option>
+                </select>
+                <input type="text" id="searchInput" placeholder="Search AI services..." class="border rounded-xl px-4 py-2 flex-1 w-full min-w-[200px] focus:ring-2 focus:ring-purple-500 transition" />
+                <button id="aiMatchBtn" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-xl text-sm font-semibold hover:shadow-lg transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    AI Match
+                </button>
+            </div>
+        </div>
+        
+        <div id="aiModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-[60] flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-8 relative transform transition-all scale-95 opacity-0 duration-300">
+                <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">AI-Powered Matching</h3>
+                    <p class="text-gray-600 mb-6" id="aiModalText">Describe your AI needs or business challenge below, and our Gemini 2.5 platform will suggest the best fit from our marketplace.</p>
+                    <textarea id="aiPrompt" class="w-full border rounded-lg p-4 mb-4 resize-none focus:ring-2 focus:ring-purple-500" rows="4" placeholder="e.g., I need an AI to analyze customer reviews for sentiment and key trends..."></textarea>
+                    <button id="getRecommendationsBtn" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition">
+                        Get AI Recommendations
+                    </button>
+                    <div id="aiResponse" class="mt-6 text-left hidden">
+                        <h4 class="font-bold text-lg mb-2 text-gray-800">Your AI-powered recommendations:</h4>
+                        <div id="recommendationsContent" class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-gray-700"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="marketplaceGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+
+        <div id="loadingState" class="text-center py-12 hidden">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading AI services...</p>
+        </div>
+    </main>
+
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyCBd7O4cZ8LX1dgTiTZt4NcU5NJVm4Blak",
+  authDomain: "aetheron-2b3b4.firebaseapp.com",
+  projectId: "aetheron-2b3b4",
+  storageBucket: "aetheron-2b3b4.firebasestorage.app",
+  messagingSenderId: "240923034323",
+  appId: "1:240923034323:web:4dc8e5e029e953a41e8a26"
+};
+        const allServices = [{
+            name: "Google",
+            description: "Seeking advanced NLP models for internal document analysis and customer support automation.",
+            needs: ["NLP", "Automation", "Data Analytics"],
+            website: "https://about.google/partnerships/",
+            industry: "Technology"
+        }, {
+            name: "Ford Motor Company",
+            description: "Looking for computer vision solutions to improve quality control on the assembly line and identify defects in real-time.",
+            needs: ["Computer Vision", "Manufacturing", "Automation"],
+            website: "https://corporate.ford.com/operations.html",
+            industry: "Automotive"
+        }, {
+            name: "Walmart",
+            description: "We need an AI platform for predictive inventory management and supply chain optimization to reduce waste.",
+            needs: ["Machine Learning", "Data Analytics", "Logistics"],
+            website: "https://corporate.walmart.com/suppliers",
+            industry: "Retail"
+        }, {
+            name: "JPMorgan Chase",
+            description: "Seeking a solution for fraud detection and risk assessment using machine learning on large datasets.",
+            needs: ["Machine Learning", "Finance", "Security"],
+            website: "https://www.jpmorganchase.com/about/our-clients/corporate-investor-collaboration",
+            industry: "Finance"
+        }, {
+            name: "Pfizer",
+            description: "Looking for a partner to use AI for drug discovery and to analyze clinical trial data for faster insights.",
+            needs: ["Data Analytics", "Machine Learning", "Healthcare"],
+            website: "https://www.pfizer.com/science/open-innovation",
+            industry: "Healthcare"
+        }];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll('.fade-in').forEach(el => el.classList.add('visible'));
+            displayServices(allServices);
+
+            document.getElementById('industryFilter').addEventListener('change', filterServices);
+            document.getElementById('searchInput').addEventListener('input', filterServices);
+            
+            const aiModal = document.getElementById('aiModal');
+            const aiModalContent = aiModal.querySelector('div');
+            const aiPromptInput = document.getElementById('aiPrompt');
+            const getRecommendationsBtn = document.getElementById('getRecommendationsBtn');
+            const aiResponseDiv = document.getElementById('aiResponse');
+            const recommendationsContentDiv = document.getElementById('recommendationsContent');
+
+            document.getElementById('aiMatchBtn').addEventListener('click', () => {
+                aiModal.classList.remove('hidden');
+                setTimeout(() => {
+                    aiModalContent.classList.remove('scale-95', 'opacity-0');
+                    aiModalContent.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            });
+            document.getElementById('closeModalBtn').addEventListener('click', () => {
+                aiModalContent.classList.remove('scale-100', 'opacity-100');
+                aiModalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => aiModal.classList.add('hidden'), 300);
+            });
+
+            // This is the simulated AI response logic.
+            getRecommendationsBtn.addEventListener('click', async () => {
+                const prompt = aiPromptInput.value;
+                if (!prompt) {
+                    alert('Please enter a business need.');
+                    return;
+                }
+
+                getRecommendationsBtn.textContent = 'Analyzing...';
+                getRecommendationsBtn.disabled = true;
+                aiResponseDiv.classList.add('hidden');
+                
+                try {
+                    // Simulate a network delay
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    let recommendations = [];
+                    const lowerCasePrompt = prompt.toLowerCase();
+
+                    // Search for keywords in the user's prompt
+                    if (lowerCasePrompt.includes('computer vision') || lowerCasePrompt.includes('assembly line') || lowerCasePrompt.includes('quality control')) {
+                        recommendations.push(allServices.find(s => s.name === "Ford Motor Company"));
+                    }
+                    if (lowerCasePrompt.includes('fraud') || lowerCasePrompt.includes('finance') || lowerCasePrompt.includes('risk')) {
+                        recommendations.push(allServices.find(s => s.name === "JPMorgan Chase"));
+                    }
+                    if (lowerCasePrompt.includes('sentiment') || lowerCasePrompt.includes('customer reviews') || lowerCasePrompt.includes('nlp')) {
+                        recommendations.push(allServices.find(s => s.name === "Google"));
+                    }
+                    if (lowerCasePrompt.includes('inventory') || lowerCasePrompt.includes('supply chain') || lowerCasePrompt.includes('logistics')) {
+                        recommendations.push(allServices.find(s => s.name === "Walmart"));
+                    }
+                    if (lowerCasePrompt.includes('drug discovery') || lowerCasePrompt.includes('clinical trial') || lowerCasePrompt.includes('healthcare')) {
+                        recommendations.push(allServices.find(s => s.name === "Pfizer"));
+                    }
+
+                    // Display the results
+                    if (recommendations.length === 0) {
+                        recommendationsContentDiv.innerHTML = `<p>Based on your query, we don't have a direct match. Please try a different query or browse all services for a broader view.</p>`;
+                    } else {
+                        recommendationsContentDiv.innerHTML = `<p class="mb-2">Based on your needs, here are our top recommendations:</p>${recommendations.filter(Boolean).map(rec =>
+                            `<div class="mb-2">
+                                <p class="font-bold">${rec.name}</p>
+                                <p class="text-sm">${rec.description}</p>
+                                <a href="${rec.website}" target="_blank" class="text-xs text-purple-600 hover:underline">Visit Website</a>
+                            </div>`
+                        ).join('')}`;
+                    }
+
+                } catch (error) {
+                    recommendationsContentDiv.textContent = "Sorry, an internal error occurred. Please try again later.";
+                } finally {
+                    getRecommendationsBtn.textContent = 'Get AI Recommendations';
+                    getRecommendationsBtn.disabled = false;
+                    aiResponseDiv.classList.remove('hidden');
+                }
+            });
+        });
+
+        function filterServices() {
+            const industry = document.getElementById('industryFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            const filteredServices = allServices.filter(service => {
+                const matchesIndustry = !industry || service.industry === industry;
+                const matchesSearch = service.name.toLowerCase().includes(searchTerm) || service.description.toLowerCase().includes(searchTerm) || service.needs.some(need => need.toLowerCase().includes(searchTerm));
+                return matchesIndustry && matchesSearch;
+            });
+
+            displayServices(filteredServices);
+        }
+
+        function displayServices(services) {
+            const grid = document.getElementById('marketplaceGrid');
+            grid.innerHTML = '';
+            if (services.length === 0) {
+                grid.innerHTML = '<p class="text-center text-gray-500 col-span-full py-12">No enterprises match your criteria.</p>';
+            }
+            services.forEach(enterprise => {
+                const enterpriseCard = createEnterpriseCard(enterprise);
+                grid.appendChild(enterpriseCard);
+            });
+        }
+
+        function createEnterpriseCard(enterprise) {
+            const card = document.createElement('div');
+            card.className = 'card-bg rounded-2xl shadow-xl p-6 transition-all duration-300 transform hover:scale-[1.02] border border-gray-200';
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                        <span class="text-white font-bold text-sm">🌐</span>
+                    </div>
+                    <span class="bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold">
+                        ${enterprise.industry || 'Multi-industry'}
+                    </span>
+                </div>
+
+                <h3 class="text-xl font-bold text-gray-900 mb-2">${enterprise.name}</h3>
+                <p class="text-gray-600 mb-4 text-sm line-clamp-3">${enterprise.description}</p>
+                
+                <div class="flex flex-wrap gap-1 mb-4">
+                    ${enterprise.needs.map(need =>
+                        `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">${need}</span>`
+                    ).join('')}
+                </div>
+                
+                <div class="flex items-center justify-between mt-auto">
+                    <span class="text-sm text-gray-500">Need posted by ${enterprise.name}</span>
+                    <a href="${enterprise.website}" target="_blank"
+                       class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-5 py-2 rounded-xl text-sm font-semibold hover:shadow-md transition transform hover:-translate-y-0.5">
+                        Visit Website
+                    </a>
+                </div>
+            `;
+            return card;
+        }
+    </script>
+</body>
+</html>

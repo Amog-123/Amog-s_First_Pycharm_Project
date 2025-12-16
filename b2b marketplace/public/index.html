@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aetheron - AI-Powered B2B Marketplace</title>
+
+  <!-- Favicon fix -->
+  <link rel="icon" href="data:,">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Firebase v8 SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+  <style>
+    body { padding-top: 64px; font-family: 'Poppins', sans-serif; }
+    .fade-in { opacity:0; transform:translateY(30px); transition:opacity 1s, transform 1s; }
+    .fade-in.visible { opacity:1; transform:none; }
+    .scale-in { transform:scale(0.95); transition:transform 400ms; }
+    .scale-in:hover { transform:scale(1); }
+  </style>
+</head>
+
+<body class="bg-gray-50">
+
+  <!-- Fixed Header -->
+  <header class="fixed top-0 left-0 right-0 h-16 bg-white shadow z-50 flex items-center justify-between px-6 fade-in">
+    <a href="index.html" class="flex items-center gap-3">
+      <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=48"
+           alt="Aetheron AI Logo"
+           class="w-10 h-10 rounded-full border-2 border-purple-600 scale-in" />
+                 <span class="text-xl font-extrabold text-purple-700 tracking-tight">Aetheron AI</span>
+    </a>
+
+    <nav class="hidden md:flex gap-6">
+      <a href="lend-ai-service.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Submit AI Service</a>
+      <a href="marketplace.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Marketplace</a>
+      <a href="contact.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Contact</a>
+      <a href="admin.html" class="text-gray-700 font-medium hover:text-purple-700 transition">Dashboard</a>
+    </nav>
+
+    <div id="authArea" class="flex items-center gap-2"></div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-6xl mx-auto px-6 py-12 fade-in">
+
+    <!-- Hero Section -->
+    <section class="flex flex-col-reverse md:flex-row items-center gap-10 mb-20">
+      <div class="flex-1">
+        <h1 class="text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+          AI-Powered B2B Marketplace for
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+            Enterprise AI
+          </span>
+        </h1>
+        <p class="text-xl text-gray-700 mb-6">
+          Connect AI startups with Fortune 500 companies through intelligent matching powered by Firebase AI & Gemini 2.5.
+        </p>
+      </div>
+
+      <div class="flex-1 fade-in scale-in">
+        <img src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=600"
+             alt="AI-powered connections"
+             class="rounded-3xl shadow-2xl w-full border-4 border-purple-100"/>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-20 fade-in">
+      <h2 class="text-4xl font-bold text-center mb-4">Powered by Advanced AI</h2>
+      <p class="text-xl text-gray-600 text-center mb-12">
+        Our platform leverages cutting-edge AI technology
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center scale-in hover:scale-105 transition-transform">
+          <h3 class="text-xl font-bold text-gray-800 mb-3">Gemini 2.5 Integration</h3>
+          <p class="text-gray-600">
+            Advanced models analyze startup capabilities and enterprise needs.
+          </p>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center scale-in hover:scale-105 transition-transform">
+          <h3 class="text-xl font-bold text-gray-800 mb-3">Firebase AI Backend</h3>
+          <p class="text-gray-600">
+            Real-time data processing for instant recommendations.
+          </p>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-lg p-8 text-center scale-in hover:scale-105 transition-transform">
+          <h3 class="text-xl font-bold text-gray-800 mb-3">Smart Analytics</h3>
+          <p class="text-gray-600">
+            AI insights predict market trends and opportunities.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white py-12 text-center fade-in">
+    <h3 class="text-2xl font-bold mb-2">Ready to Transform B2B AI?</h3>
+    <p class="text-lg opacity-80">Join the marketplace today!</p>
+  </footer>
+
+  <!-- Firebase Auth Logic -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const authArea = document.getElementById("authArea");
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    const loginWithGoogle = () => {
+      firebase.auth().signInWithPopup(provider)
+        .then(() => window.location.href = "marketplace.html")
+        .catch(err => console.error("Login error:", err));
+    };
+
+    firebase.auth().onAuthStateChanged(user => {
+      authArea.innerHTML = "";
+
+      if (user) {
+        const userDiv = document.createElement("div");
+        userDiv.className = "flex items-center gap-3";
+
+        const avatar = document.createElement("img");
+        avatar.src = user.photoURL || "https://via.placeholder.com/40";
+        avatar.className = "w-10 h-10 rounded-full border-2 border-purple-600";
+
+        const name = document.createElement("span");
+        name.className = "font-medium text-gray-700";
+        name.textContent = user.displayName || "User";
+
+        const logoutBtn = document.createElement("button");
+        logoutBtn.textContent = "Logout";
+        logoutBtn.className = "bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition";
+        logoutBtn.onclick = () => firebase.auth().signOut();
+
+        userDiv.append(avatar, name, logoutBtn);
+        authArea.appendChild(userDiv);
+      } else {
+        const loginBtn = document.createElement("button");
+        loginBtn.textContent = "Login with Google";
+        loginBtn.className =
+          "bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded hover:scale-105 transition";
+        loginBtn.onclick = loginWithGoogle;
+        authArea.appendChild(loginBtn);
+      }
+    });
+  </script>
+
+  <!-- 🔥 FADE-IN VISIBILITY FIX (THIS WAS THE MISSING PIECE) -->
+  <script>
+    window.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".fade-in").forEach(el => {
+        el.classList.add("visible");
+      });
+    });
+  </script>
+
+</body>
+</html>
